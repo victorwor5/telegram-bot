@@ -175,9 +175,15 @@ bot.catch((error, ctx) => {
   console.error(`Bot error for update ${ctx.update.update_id}:`, error);
 });
 
-bot.launch().then(() => {
-  console.log("Bot running...");
-});
+bot.launch({
+  dropPendingUpdates: true
+})
+  .then(() => {
+    console.log("Bot running...");
+  })
+  .catch((error) => {
+    console.error("Bot launch error:", error.message);
+  });
 
 if (PORT) {
   http.createServer((request, response) => {
