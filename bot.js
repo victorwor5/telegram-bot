@@ -181,12 +181,56 @@ bot.launch().then(() => {
 
 if (PORT) {
   http.createServer((request, response) => {
+    if (request.method === "POST" && request.url === "/flutterwave-webhook") {
+      let body = "";
+
+      request.on("data", (chunk) => {
+        body += chunk.toString();
+      });
+
+      request.on("end", async () => {
+        try {
+          const signature = request.headers["verif-hash"];
+
+          if (!signature || signature !== FLW_HASH) {
+            response.writeHead(401);
+            return response.end("Unauthorized");
+          }
+
+          const event = JSON.parse(body);
+
+          if (
+            event.event === "charge.completed" &&
+            event.data.status === "successful"
+          ) {
+            const telegramUserId = event.data.meta.telegram_user_id;
+            const groupId = event.data.meta.telegram_group_id;
+
+            const invite = await bot.telegram.createChatInviteLink(groupId, {
+              member_limit: 1
+            });
+
+            await bot.telegram.sendMessage(
+              telegramUserId,
+              `✅ Payment confirmed!\nJoin your group here:\n${invite.invite_link}`
+            );
+          }
+
+          response.writeHead(200);
+          response.end("OK");
+        } catch (error) {
+          console.log("Webhook error:", error);
+          response.writeHead(500);
+          response.end("Webhook error");
+        }
+      });
+
+      return;
+    }
+
     response.writeHead(200, { "Content-Type": "text/plain" });
     response.end("ok");
   }).listen(PORT, () => {
     console.log(`Health check listening on port ${PORT}.`);
   });
 }
-
-process.once("SIGINT", () => bot.stop("SIGINT"));
-process.once("SIGTERM", () => bot.stop("SIGTERM"));
