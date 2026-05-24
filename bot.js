@@ -34,13 +34,13 @@ const bot = new Telegraf(BOT_TOKEN);
 const tiers = {
   tier1: {
     label: "Tier 1",
-    amount: 5000,
+    amount: 7000,
     currency: "NGN",
     groupId: TIER1_GROUP_ID
   },
   tier2: {
     label: "Tier 2",
-    amount: 10000,
+    amount: 20000,
     currency: "NGN",
     groupId: TIER2_GROUP_ID
   }
@@ -58,8 +58,8 @@ function buildTxRef(tierKey, userId) {
 
 function buildTierButtons() {
   return Markup.inlineKeyboard([
-    [Markup.button.callback("Tier 1 - NGN 5,000", "subscribe:tier1")],
-    [Markup.button.callback("Tier 2 - NGN 10,000", "subscribe:tier2")]
+    [Markup.button.callback("Tier 1 - NGN 7,000", "subscribe:tier1")],
+    [Markup.button.callback("Tier 2 - NGN 20,000", "subscribe:tier2")]
   ]);
 }
 
@@ -70,26 +70,32 @@ async function createPaymentLink(tierKey, user) {
     throw new Error("Unknown subscription tier.");
   }
 
-  const paymentData = {
-    tx_ref: buildTxRef(tierKey, user.id),
-    amount: tier.amount,
-    currency: tier.currency,
-    customer: {
-      email: `telegram-user-${user.id}@example.com`,
-      name: getDisplayName(user)
-    },
-    customizations: {
-      title: `${tier.label} Telegram Subscription`,
-      description: `Access to the ${tier.label} private Telegram group`
-    },
-    meta: {
-      tier: tierKey,
-      telegram_user_id: user.id,
-      telegram_username: user.username || "",
-      telegram_group_id: tier.groupId
-    }
-  };
+const paymentData = {
+  tx_ref: `${tierKey}_${userId}_${Date.now()}`,
 
+  amount: tier.amount,
+
+  currency: "NGN",
+
+  redirect_url: "https://google.com",
+
+  customer: {
+    email: `telegram-user-${userId}@example.com`,
+    name: username || "Telegram User"
+  },
+
+  customizations: {
+    title: `${tier.name} Telegram Subscription`,
+    description: `Access to the ${tier.name} private Telegram group`
+  },
+
+  meta: {
+    tier: tierKey,
+    telegram_user_id: userId,
+    telegram_username: username || "",
+    telegram_group_id: tier.groupId
+  }
+};
   const response = await axios.post("https://api.flutterwave.com/v3/payments", paymentData, {
     headers: {
       Authorization: `Bearer ${FLW_SECRET_KEY}`,
