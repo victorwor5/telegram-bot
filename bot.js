@@ -128,9 +128,9 @@ bot.action(/^subscribe:(tier1|tier2)$/, async (ctx) => {
       Markup.inlineKeyboard([[Markup.button.url(`Pay for ${tier.label}`, paymentLink)]])
     );
   } catch (error) {
-    console.error(`Failed to create ${tier.label} payment link:`, error.response?.data || error.message);
-    await ctx.reply("Payment link creation failed. Please try again shortly.");
-  }
+    console.log("Flutterwave error:", JSON.stringify(error.response?.data || error.message, null, 2));
+    ctx.reply("Payment link creation failed");
+}
 });
 
 bot.catch((error, ctx) => {
