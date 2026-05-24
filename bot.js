@@ -127,7 +127,7 @@ bot.action(/^subscribe:(tier1|tier2)$/, async (ctx) => {
       `Your ${tier.label} payment link is ready:`,
       Markup.inlineKeyboard([[Markup.button.url(`Pay for ${tier.label}`, paymentLink)]])
     );
-  } } catch (error) {
+  }  catch (error) {
     console.log("FULL ERROR:", error);
     console.log("FLW RESPONSE:", error.response?.data);
     await ctx.reply("Payment link creation failed. Check Railway logs.");
