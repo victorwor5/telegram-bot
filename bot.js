@@ -71,28 +71,28 @@ async function createPaymentLink(tierKey, user) {
   }
 
 const paymentData = {
-  tx_ref: `${tierKey}_${userId}_${Date.now()}`,
+  tx_ref: buildTxRef(tierKey, user.id),
 
   amount: tier.amount,
 
-  currency: "NGN",
+  currency: tier.currency,
 
   redirect_url: "https://google.com",
 
   customer: {
-    email: `telegram-user-${userId}@example.com`,
-    name: username || "Telegram User"
+    email: `telegram-user-${user.id}@example.com`,
+    name: getDisplayName(user)
   },
 
   customizations: {
-    title: `${tier.name} Telegram Subscription`,
-    description: `Access to the ${tier.name} private Telegram group`
+    title: `${tier.label} Telegram Subscription`,
+    description: `Access to the ${tier.label} private Telegram group`
   },
 
   meta: {
     tier: tierKey,
-    telegram_user_id: userId,
-    telegram_username: username || "",
+    telegram_user_id: user.id,
+    telegram_username: user.username || "",
     telegram_group_id: tier.groupId
   }
 };
