@@ -1,157 +1,158 @@
 require("dotenv").config();
 
-const http = require("http");
+const { Telegraf, Markup } = require("telegraf");
 const axios = require("axios");
-const { Markup, Telegraf } = require("telegraf");
+const express = require("express");
 
-const {
-  BOT_TOKEN,
-  TIER1_GROUP_ID,
-  TIER2_GROUP_ID,
-  FLW_PUBLIC_KEY,
-  FLW_SECRET_KEY,
-  FLW_HASH,
-  PORT
-} = process.env;
+const app = express();
 
-const requiredEnv = [
-  "BOT_TOKEN",
-  "TIER1_GROUP_ID",
-  "TIER2_GROUP_ID",
-  "FLW_PUBLIC_KEY",
-  "FLW_SECRET_KEY",
-  "FLW_HASH"
-];
+const bot = new Telegraf(process.env.BOT_TOKEN);
 
-const missingEnv = requiredEnv.filter((name) => !process.env[name]);
-
-if (missingEnv.length > 0) {
-  throw new Error(`Missing required environment variable(s): ${missingEnv.join(", ")}`);
-}
-
-const bot = new Telegraf(BOT_TOKEN);
-
-const tiers = {
+const TIERS = {
   tier1: {
-    label: "Tier 1",
+    name: "Tier 1",
     amount: 7000,
-    currency: "NGN",
-    redirect_url: "https://google.com",
-    groupId: TIER1_GROUP_ID
+    groupId: process.env.TIER1_GROUP_ID
   },
+
   tier2: {
-    label: "Tier 2",
+    name: "Tier 2",
     amount: 20000,
-    currency: "NGN",
-    redirect_url: "https://google.com",
-    groupId: TIER2_GROUP_ID
+    groupId: process.env.TIER2_GROUP_ID
   }
 };
 
-function getDisplayName(user) {
-  return [user.first_name, user.last_name].filter(Boolean).join(" ")
-    || user.username
-    || `Telegram user ${user.id}`;
-}
+app.get("/", (req, res) => {
+  res.send("Bot is running");
+});
 
-function buildTxRef(tierKey, userId) {
-  return `${tierKey}_${userId}_${Date.now()}`;
-}
+const PORT = process.env.PORT || 8080;
 
-function buildTierButtons() {
-  return Markup.inlineKeyboard([
-    [Markup.button.callback("Tier 1 - NGN 7,000", "subscribe:tier1")],
-    [Markup.button.callback("Tier 2 - NGN 20,000", "subscribe:tier2")]
-  ]);
-}
+app.listen(PORT, () => {
+  console.log(`Health check listening on port ${PORT}.`);
+});
 
-async function createPaymentLink(tierKey, user) {
-  const tier = tiers[tierKey];
+async function createPaymentLink(userId, username, tierKey) {
 
-  if (!tier) {
-    throw new Error("Unknown subscription tier.");
-  }
+  const tier = TIERS[tierKey];
 
   const paymentData = {
-    tx_ref: buildTxRef(tierKey, user.id),
+    tx_ref: `${tierKey}_${userId}_${Date.now()}`,
+
     amount: tier.amount,
-    currency: tier.currency,
+
+    currency: "NGN",
+
+    redirect_url: "https://google.com",
+
     customer: {
-      email: `telegram-user-${user.id}@example.com`,
-      name: getDisplayName(user)
+      email: `telegram-user-${userId}@example.com`,
+      name: username || "Telegram User"
     },
+
     customizations: {
-      title: `${tier.label} Telegram Subscription`,
-      description: `Access to the ${tier.label} private Telegram group`
+      title: `${tier.name} Telegram Subscription`,
+      description: `Access to the ${tier.name} private Telegram group`
     },
+
     meta: {
       tier: tierKey,
-      telegram_user_id: user.id,
-      telegram_username: user.username || "",
+      telegram_user_id: userId,
+      telegram_username: username || "",
       telegram_group_id: tier.groupId
     }
   };
 
-  const response = await axios.post("https://api.flutterwave.com/v3/payments", paymentData, {
-    headers: {
-      Authorization: `Bearer ${FLW_SECRET_KEY}`,
-      "Content-Type": "application/json"
-    }
-  });
+  try {
 
-  const paymentLink = response.data && response.data.data && response.data.data.link;
+    const response = await axios.post(
+      "https://api.flutterwave.com/v3/payments",
+      paymentData,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
 
-  if (!paymentLink) {
-    throw new Error("Flutterwave did not return a payment link.");
+    return response.data.data.link;
+
+  } catch (error) {
+
+    console.log(
+      "FLW RESPONSE:",
+      JSON.stringify(error.response?.data || error.message, null, 2)
+    );
+
+    return null;
   }
-
-  return paymentLink;
 }
 
-bot.start((ctx) => {
-  return ctx.reply("Choose a subscription plan:", buildTierButtons());
+bot.start(async (ctx) => {
+
+  await ctx.reply(
+    "Choose a subscription tier:",
+    Markup.inlineKeyboard([
+      [
+        Markup.button.callback("🎟 Tier 1 - ₦7,000", "tier1")
+      ],
+      [
+        Markup.button.callback("🔥 Tier 2 - ₦20,000", "tier2")
+      ]
+    ])
+  );
+
 });
 
-bot.command("subscribe", (ctx) => {
-  return ctx.reply("Choose a subscription plan:", buildTierButtons());
-});
+bot.action("tier1", async (ctx) => {
 
-bot.action(/^subscribe:(tier1|tier2)$/, async (ctx) => {
-  const tierKey = ctx.match[1];
-  const tier = tiers[tierKey];
+  const paymentLink = await createPaymentLink(
+    ctx.from.id,
+    ctx.from.username,
+    "tier1"
+  );
 
-  try {
-    await ctx.answerCbQuery(`Preparing ${tier.label} payment link...`);
-
-    const paymentLink = await createPaymentLink(tierKey, ctx.from);
+  if (paymentLink) {
 
     await ctx.reply(
-      `Your ${tier.label} payment link is ready:`,
-      Markup.inlineKeyboard([[Markup.button.url(`Pay for ${tier.label}`, paymentLink)]])
+      `Pay here:\n${paymentLink}`
     );
-  }  catch (error) {
-    console.log("FULL ERROR:", error);
-    console.log("FLW RESPONSE:", error.response?.data);
-    await ctx.reply("Payment link creation failed. Check Railway logs.");
-}
+
+  } else {
+
+    await ctx.reply(
+      "Payment link creation failed. Check Railway logs."
+    );
+
+  }
+
 });
 
-bot.catch((error, ctx) => {
-  console.error(`Bot error for update ${ctx.update.update_id}:`, error);
+bot.action("tier2", async (ctx) => {
+
+  const paymentLink = await createPaymentLink(
+    ctx.from.id,
+    ctx.from.username,
+    "tier2"
+  );
+
+  if (paymentLink) {
+
+    await ctx.reply(
+      `Pay here:\n${paymentLink}`
+    );
+
+  } else {
+
+    await ctx.reply(
+      "Payment link creation failed. Check Railway logs."
+    );
+
+  }
+
 });
 
-bot.launch().then(() => {
-  console.log("Bot running...");
-});
+bot.launch();
 
-if (PORT) {
-  http.createServer((request, response) => {
-    response.writeHead(200, { "Content-Type": "text/plain" });
-    response.end("ok");
-  }).listen(PORT, () => {
-    console.log(`Health check listening on port ${PORT}.`);
-  });
-}
-
-process.once("SIGINT", () => bot.stop("SIGINT"));
-process.once("SIGTERM", () => bot.stop("SIGTERM"));
+console.log("Bot is running...");
