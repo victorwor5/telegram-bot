@@ -34,14 +34,16 @@ const bot = new Telegraf(BOT_TOKEN);
 const tiers = {
   tier1: {
     label: "Tier 1",
-    amount: 5000,
+    amount: 7000,
     currency: "NGN",
+    redirect_url: "https://google.com",
     groupId: TIER1_GROUP_ID
   },
   tier2: {
     label: "Tier 2",
-    amount: 10000,
+    amount: 20000,
     currency: "NGN",
+    redirect_url: "https://google.com",
     groupId: TIER2_GROUP_ID
   }
 };
