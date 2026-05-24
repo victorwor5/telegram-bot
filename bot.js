@@ -60,8 +60,8 @@ function buildTxRef(tierKey, userId) {
 
 function buildTierButtons() {
   return Markup.inlineKeyboard([
-    [Markup.button.callback("Tier 1 - NGN 5,000", "subscribe:tier1")],
-    [Markup.button.callback("Tier 2 - NGN 10,000", "subscribe:tier2")]
+    [Markup.button.callback("Tier 1 - NGN 7,000", "subscribe:tier1")],
+    [Markup.button.callback("Tier 2 - NGN 20,000", "subscribe:tier2")]
   ]);
 }
 
