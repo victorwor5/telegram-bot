@@ -119,25 +119,56 @@ bot.start((ctx) => {
 bot.command("subscribe", (ctx) => {
   return ctx.reply("Choose a subscription plan:", buildTierButtons());
 });
-
 bot.action(/^subscribe:(tier1|tier2)$/, async (ctx) => {
   const tierKey = ctx.match[1];
   const tier = tiers[tierKey];
 
   try {
-    await ctx.answerCbQuery(`Preparing ${tier.label} payment link...`);
+    const paymentData = {
+      tx_ref: `${tierKey}_${ctx.from.id}_${Date.now()}`,
+      amount: tier.amount,
+      currency: "NGN",
+      redirect_url: "https://google.com",
 
-    const paymentLink = await createPaymentLink(tierKey, ctx.from);
+      customer: {
+        email: `telegram-user-${ctx.from.id}@example.com`,
+        name: ctx.from.username || ctx.from.first_name || "Telegram User"
+      },
 
-    await ctx.reply(
-      `Your ${tier.label} payment link is ready:`,
-      Markup.inlineKeyboard([[Markup.button.url(`Pay for ${tier.label}`, paymentLink)]])
+      customizations: {
+        title: `${tier.name} Telegram Subscription`,
+        description: `Access to the ${tier.name} private Telegram group`
+      },
+
+      meta: {
+        tier: tierKey,
+        telegram_user_id: ctx.from.id,
+        telegram_username: ctx.from.username || "",
+        telegram_group_id: tier.groupId
+      }
+    };
+
+    const response = await axios.post(
+      "https://api.flutterwave.com/v3/payments",
+      paymentData,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
+          "Content-Type": "application/json"
+        }
+      }
     );
-  }  catch (error) {
-    console.log("FULL ERROR:", error);
-    console.log("FLW RESPONSE:", error.response?.data);
+
+    await ctx.reply(`Pay here:\n${response.data.data.link}`);
+
+  } catch (error) {
+    console.log(
+      "FLW RESPONSE:",
+      JSON.stringify(error.response?.data || error.message, null, 2)
+    );
+
     await ctx.reply("Payment link creation failed. Check Railway logs.");
-}
+  }
 });
 
 bot.catch((error, ctx) => {
