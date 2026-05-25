@@ -196,56 +196,42 @@ if (PORT) {
       });
 
       request.on("end", async () => {
-        try {
-          const signature = request.headers["verif-hash"];
+       try {
 
-          if (!signature || signature !== FLW_HASH) {
-            response.writeHead(401);
-            return response.end("Unauthorized");
-          }
+  const event = JSON.parse(body);
 
-          const event = JSON.parse(body);
-          console.log("WEBHOOK BODY:", body);
-if (event.status === "successful") {
+  console.log("WEBHOOK BODY:", body);
 
-  const txParts = event.txRef.split("_");
+  if (event.status === "successful") {
 
-  const tierKey = txParts[0];
-  const telegramUserId = txParts[1];
+    const txParts = event.txRef.split("_");
 
-  const tier = tiers[tierKey];
-  const groupId = tier.groupId;
+    const tierKey = txParts[0];
+    const telegramUserId = txParts[1];
 
-  const invite = await bot.telegram.createChatInviteLink(groupId, {
-    member_limit: 1
-  });
+    const tier = tiers[tierKey];
+    const groupId = tier.groupId;
 
-  await bot.telegram.sendMessage(
-    telegramUserId,
-    `✅ Payment confirmed!\nJoin your group here:\n${invite.invite_link}`
-  );
+    const invite = await bot.telegram.createChatInviteLink(groupId, {
+      member_limit: 1
+    });
+
+    await bot.telegram.sendMessage(
+      telegramUserId,
+      `✅ Payment confirmed!\nJoin your group here:\n${invite.invite_link}`
+    );
+  }
+
+  response.writeHead(200);
+  response.end("OK");
+
+} catch (error) {
+
+  console.log("Webhook error:", error);
+
+  response.writeHead(500);
+  response.end("Webhook error");
 }
-            
-            const telegramUserId = event.data.meta.telegram_user_id;
-            const groupId = event.data.meta.telegram_group_id;
-
-            const invite = await bot.telegram.createChatInviteLink(groupId, {
-              member_limit: 1
-            });
-
-            await bot.telegram.sendMessage(
-              telegramUserId,
-              `✅ Payment confirmed!\nJoin your group here:\n${invite.invite_link}`
-            );
-          }
-
-          response.writeHead(200);
-          response.end("OK");
-        } catch (error) {
-          console.log("Webhook error:", error);
-          response.writeHead(500);
-          response.end("Webhook error");
-        }
       });
 
       return;
