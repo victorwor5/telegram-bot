@@ -264,6 +264,6 @@ setInterval(async () => {
 
   console.log("Checking subscriptions...");
 
-}, 1000 * 60 * 60);
+}, 1000 * 60);
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
