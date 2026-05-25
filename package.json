@@ -7,6 +7,7 @@
     "check": "node --check bot.js"
   },
   "dependencies": {
+    "pg": "^8.11.5",
     "axios": "^1.7.9",
     "telegraf": "^4.16.3",
     "dotenv": "^16.4.5"
