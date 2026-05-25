@@ -273,6 +273,25 @@ setInterval(async () => {
   `);
 
   console.log("Subscriptions needing reminder:", result.rows.length);
+  for (const sub of result.rows) {
+  await bot.telegram.sendMessage(
+    sub.telegram_user_id,
+    `😂 Omo... your subscription is packing its bags already.
+
+In 3 days, your access expires and the bot bouncers may escort you out dramatically. 🚪
+
+Renew before then to keep enjoying the community. 🎤🔥`
+  );
+
+  await pool.query(
+    `
+      UPDATE subscriptions
+      SET reminded_before_expiry = true
+      WHERE id = $1
+    `,
+    [sub.id]
+  );
+}
 
 }, 1000 * 60 * 60);
 process.once("SIGINT", () => bot.stop("SIGINT"));
