@@ -292,7 +292,17 @@ Renew before then to keep enjoying the community. 🎤🔥`
     [sub.id]
   );
 }
+const graceResult = await pool.query(`
+  SELECT *
+  FROM subscriptions
+  WHERE
+    expires_at <= NOW()
+    AND grace_warning_sent = false
+    AND removed = false
+`);
 
+console.log("Expired users needing grace warning:", graceResult.rows.length);
+  
 }, 1000 * 60 * 60);
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
