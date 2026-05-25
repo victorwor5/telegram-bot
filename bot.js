@@ -206,11 +206,26 @@ if (PORT) {
 
           const event = JSON.parse(body);
           console.log("WEBHOOK BODY:", body);
+if (event.status === "successful") {
 
-          if (
-            event.event === "charge.completed" &&
-            event.data.status === "successful"
-          ) {
+  const txParts = event.txRef.split("_");
+
+  const tierKey = txParts[0];
+  const telegramUserId = txParts[1];
+
+  const tier = tiers[tierKey];
+  const groupId = tier.groupId;
+
+  const invite = await bot.telegram.createChatInviteLink(groupId, {
+    member_limit: 1
+  });
+
+  await bot.telegram.sendMessage(
+    telegramUserId,
+    `✅ Payment confirmed!\nJoin your group here:\n${invite.invite_link}`
+  );
+}
+            
             const telegramUserId = event.data.meta.telegram_user_id;
             const groupId = event.data.meta.telegram_group_id;
 
