@@ -260,6 +260,10 @@ await pool.query(
     console.log(`Health check listening on port ${PORT}.`);
   });
 }
+setInterval(async () => {
 
+  console.log("Checking subscriptions...");
+
+}, 1000 * 60 * 60);
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
