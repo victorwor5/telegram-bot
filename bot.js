@@ -205,6 +205,7 @@ if (PORT) {
           }
 
           const event = JSON.parse(body);
+          console.log("WEBHOOK BODY:", body);
 
           if (
             event.event === "charge.completed" &&
