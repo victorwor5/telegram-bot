@@ -320,6 +320,52 @@ You still have a small grace period to renew before access disappears. 🎤🔥`
     [sub.id]
   );
 }
+  const removalResult = await pool.query(`
+  SELECT *
+  FROM subscriptions
+  WHERE
+    expires_at <= NOW() - INTERVAL '3 days'
+    AND grace_warning_sent = true
+    AND removed = false
+`);
+
+console.log("Users needing removal:", removalResult.rows.length);
+
+for (const sub of removalResult.rows) {
+  try {
+    await bot.telegram.banChatMember(
+      sub.group_id,
+      sub.telegram_user_id
+    );
+
+    await bot.telegram.unbanChatMember(
+      sub.group_id,
+      sub.telegram_user_id
+    );
+
+    await bot.telegram.sendMessage(
+      sub.telegram_user_id,
+      `💔 The bot bouncers have completed their assignment 😭
+
+Your access has now been removed because the grace period ended.
+
+But no hard feelings 😂
+You can always renew and come back stronger. 🎤🔥`
+    );
+
+    await pool.query(
+      `
+        UPDATE subscriptions
+        SET removed = true
+        WHERE id = $1
+      `,
+      [sub.id]
+    );
+
+  } catch (error) {
+    console.log("Removal error:", error);
+  }
+}
 }, 1000 * 60 );
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
