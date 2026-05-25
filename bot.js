@@ -300,9 +300,26 @@ const graceResult = await pool.query(`
     AND grace_warning_sent = false
     AND removed = false
 `);
-
 console.log("Expired users needing grace warning:", graceResult.rows.length);
-  
+  for (const sub of graceResult.rows) {
+  await bot.telegram.sendMessage(
+    sub.telegram_user_id,
+    `😭 Ah ah… your subscription has expired o.
+
+Right now the bot bouncers are stretching before escorting people out dramatically. 🚪😂
+
+You still have a small grace period to renew before access disappears. 🎤🔥`
+  );
+
+  await pool.query(
+    `
+      UPDATE subscriptions
+      SET grace_warning_sent = true
+      WHERE id = $1
+    `,
+    [sub.id]
+  );
+}
 }, 1000 * 60 * 60);
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
