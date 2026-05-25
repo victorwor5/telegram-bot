@@ -366,6 +366,6 @@ You can always renew and come back stronger. 🎤🔥`
     console.log("Removal error:", error);
   }
 }
-}, 1000 * 60 );
+}, 1000 * 60 * 60);
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
