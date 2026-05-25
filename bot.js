@@ -31,7 +31,12 @@ if (missingEnv.length > 0) {
 }
 
 const bot = new Telegraf(BOT_TOKEN);
-
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 const tiers = {
   tier1: {
     label: "Tier 1",
