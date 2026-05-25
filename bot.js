@@ -228,11 +228,11 @@ expiresAt.setMonth(expiresAt.getMonth() + 1);
 await pool.query(
   `
     INSERT INTO subscriptions
-    (telegram_user_id, tier, expires_at)
-    VALUES ($1, $2, $3)
+    (telegram_user_id, tier, expires_at, group_id)
+    VALUES ($1, $2, $3, $4)
   `,
-  [telegramUserId, tierKey, expiresAt]
-); 
+  [telegramUserId, tierKey, expiresAt, groupId]
+);
     await bot.telegram.sendMessage(
       telegramUserId,
       `✅ Payment confirmed!\nJoin your group here:\n${invite.invite_link}`
