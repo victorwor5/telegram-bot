@@ -3,6 +3,7 @@ require("dotenv").config();
 const http = require("http");
 const axios = require("axios");
 const { Markup, Telegraf } = require("telegraf");
+const { Pool } = require("pg");
 
 const {
   BOT_TOKEN,
