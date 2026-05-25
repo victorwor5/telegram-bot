@@ -264,6 +264,16 @@ setInterval(async () => {
 
   console.log("Checking subscriptions...");
 
-}, 1000 * 60);
+  const result = await pool.query(`
+    SELECT *
+    FROM subscriptions
+    WHERE
+      expires_at <= NOW() + INTERVAL '3 days'
+      AND reminded_before_expiry = false
+  `);
+
+  console.log("Subscriptions needing reminder:", result.rows.length);
+
+}, 1000 * 60 * 60);
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
