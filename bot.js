@@ -188,6 +188,7 @@ bot.launch({
 if (PORT) {
   http.createServer((request, response) => {
     if (request.method === "POST" && request.url === "/flutterwave-webhook") {
+      console.log("WEBHOOK HIT");
       let body = "";
 
       request.on("data", (chunk) => {
