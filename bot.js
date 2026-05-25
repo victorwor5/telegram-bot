@@ -221,7 +221,18 @@ if (PORT) {
     const invite = await bot.telegram.createChatInviteLink(groupId, {
       member_limit: 1
     });
+const expiresAt = new Date();
 
+expiresAt.setMonth(expiresAt.getMonth() + 1);
+
+await pool.query(
+  `
+    INSERT INTO subscriptions
+    (telegram_user_id, tier, expires_at)
+    VALUES ($1, $2, $3)
+  `,
+  [telegramUserId, tierKey, expiresAt]
+); 
     await bot.telegram.sendMessage(
       telegramUserId,
       `✅ Payment confirmed!\nJoin your group here:\n${invite.invite_link}`
