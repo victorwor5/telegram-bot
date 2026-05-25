@@ -320,6 +320,6 @@ You still have a small grace period to renew before access disappears. 🎤🔥`
     [sub.id]
   );
 }
-}, 1000 * 60 * 60);
+}, 1000 * 60 );
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
