@@ -119,7 +119,15 @@ const paymentData = {
 }
 
 bot.start((ctx) => {
-  return ctx.reply("Choose a subscription plan:", buildTierButtons());
+
+  if (ctx.chat.type !== "private") {
+    return;
+  }
+
+  return ctx.reply(
+    "Choose a subscription plan:",
+    buildTierButtons()
+  );
 });
 
 bot.command("subscribe", (ctx) => {
