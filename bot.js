@@ -225,14 +225,50 @@ const expiresAt = new Date();
 
 expiresAt.setMonth(expiresAt.getMonth() + 1);
 
-await pool.query(
+const existingSub = await pool.query(
   `
-    INSERT INTO subscriptions
-    (telegram_user_id, tier, expires_at, group_id)
-    VALUES ($1, $2, $3, $4)
+    SELECT *
+    FROM subscriptions
+    WHERE telegram_user_id = $1
+      AND tier = $2
+    ORDER BY expires_at DESC
+    LIMIT 1
   `,
-  [telegramUserId, tierKey, expiresAt, groupId]
+  [telegramUserId, tierKey]
 );
+
+let newExpiresAt = new Date();
+
+if (existingSub.rows.length > 0 && new Date(existingSub.rows[0].expires_at) > new Date()) {
+  newExpiresAt = new Date(existingSub.rows[0].expires_at);
+}
+
+newExpiresAt.setMonth(newExpiresAt.getMonth() + 1);
+
+if (existingSub.rows.length > 0) {
+  await pool.query(
+    `
+      UPDATE subscriptions
+      SET
+        expires_at = $1,
+        group_id = $2,
+        reminded_before_expiry = false,
+        grace_warning_sent = false,
+        removed = false
+      WHERE id = $3
+    `,
+    [newExpiresAt, groupId, existingSub.rows[0].id]
+  );
+} else {
+  await pool.query(
+    `
+      INSERT INTO subscriptions
+      (telegram_user_id, tier, expires_at, group_id)
+      VALUES ($1, $2, $3, $4)
+    `,
+    [telegramUserId, tierKey, newExpiresAt, groupId]
+  );
+} 
     await bot.telegram.sendMessage(
       telegramUserId,
       `✅ Payment confirmed!\nJoin your group here:\n${invite.invite_link}`
