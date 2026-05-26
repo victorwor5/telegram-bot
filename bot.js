@@ -131,7 +131,15 @@ bot.start((ctx) => {
 });
 
 bot.command("subscribe", (ctx) => {
-  return ctx.reply("Choose a subscription plan:", buildTierButtons());
+
+  if (ctx.chat.type !== "private") {
+    return;
+  }
+
+  return ctx.reply(
+    "Choose a subscription plan:",
+    buildTierButtons()
+  );
 });
 bot.action(/^subscribe:(tier1|tier2)$/, async (ctx) => {
   const tierKey = ctx.match[1];
