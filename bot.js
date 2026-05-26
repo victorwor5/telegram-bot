@@ -310,14 +310,15 @@ setInterval(async () => {
 
   console.log("Subscriptions needing reminder:", result.rows.length);
   for (const sub of result.rows) {
-  await bot.telegram.sendMessage(
-    sub.telegram_user_id,
-    `😂 Omo... your subscription is packing its bags already.
+await bot.telegram.sendMessage(
+  sub.telegram_user_id,
+  `😂 Omo... your subscription is packing its bags already.
 
 In 3 days, your access expires and the bot bouncers may escort you out dramatically. 🚪
 
-Renew before then to keep enjoying the community. 🎤🔥`
-  );
+Renew before then to keep enjoying the community. 🎤🔥`,
+  buildTierButtons()
+);
 
   await pool.query(
     `
