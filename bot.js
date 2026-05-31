@@ -40,7 +40,7 @@ const pool = new Pool({
 const tiers = {
   tier1: {
     label: "Tier 1",
-    amount: 100,
+    amount: 7000,
     currency: "NGN",
     groupId: TIER1_GROUP_ID
   },
