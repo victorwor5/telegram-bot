@@ -224,9 +224,12 @@ if (PORT) {
 
   console.log("WEBHOOK BODY:", body);
 
-  if (event.status === "successful") {
+ const paymentStatus = event.status || event.data?.status;
+const txRef = event.txRef || event.tx_ref || event.data?.tx_ref;
 
-    const txParts = event.txRef.split("_");
+if (paymentStatus === "successful") {
+
+  const txParts = txRef.split("_");
 
     const tierKey = txParts[0];
     const telegramUserId = txParts[1];
